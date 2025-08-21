@@ -17,7 +17,7 @@
 html,body { height:100%; }
 body {
   margin:0;
-  background: radial-gradient(circle at 20% 20%, #1c2240, #0b0e19 70%);
+  background:#121726; /* fond unifié au lieu du radial-gradient */
   color: var(--text);
   -webkit-font-smoothing: antialiased;
 }
