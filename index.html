@@ -36,27 +36,39 @@
     </section>
 
     <section class="actions">
-      <div class="settings-row">
-        <label for="animDuration" class="serif">⏱️ Durée animation : <span id="animDurationValue">4.00s</span></label>
-        <input id="animDuration" type="range" min="500" max="15000" step="250" value="4000" />
-      </div>
-      <div class="settings-row mode-row">
-        <label for="assignMode" class="serif">🎛️ Mode : <span id="assignModeLabel">Aléatoire</span></label>
-        <select id="assignMode" aria-label="Mode d'attribution">
-          <option value="default">Aléatoire</option>
-          <option value="uniform">Uniforme parfaite</option>
-          <option value="weighted">Équilibrage progressif</option>
-        </select>
-        <div id="assignModeDesc" class="mode-desc" aria-live="polite"></div>
-      </div>
-      <div class="history-controls">
-        <button id="exportHistory" type="button" class="btn-mini" title="Exporter l'historique en JSON">⬇️ Export</button>
-        <button id="importHistory" type="button" class="btn-mini" title="Importer un fichier JSON d'historique">⬆️ Import</button>
-        <input id="importHistoryFile" type="file" accept="application/json" hidden />
+      <div class="control-bar">
+        <div class="ctrl">
+          <label for="animDuration" class="serif">⏱️ Durée animation<br><span id="animDurationValue">4.00s</span></label>
+          <input id="animDuration" type="range" min="500" max="15000" step="250" value="4000" />
+          <div class="duration-inline">
+            <input id="animDurationInput" type="number" min="0.5" max="15" step="0.25" value="4.00" aria-label="Durée en secondes" />
+            <span class="unit">s</span>
+          </div>
+        </div>
+        <div class="ctrl">
+          <label for="assignMode" class="serif">🎛️ Mode de tirage<br><span id="assignModeLabel">Aléatoire</span></label>
+          <select id="assignMode" aria-label="Mode d'attribution">
+            <option value="default">Aléatoire</option>
+            <option value="uniform">Uniforme parfaite</option>
+            <option value="weighted">Équilibrage progressif</option>
+          </select>
+          <div id="assignModeDesc" class="mode-desc" aria-live="polite"></div>
+        </div>
+        <div class="ctrl">
+          <span class="serif small-label">📦 Historique</span>
+          <div class="history-controls inline expanded">
+            <button id="exportHistory" type="button" class="btn-mini big" title="Exporter l'historique en JSON">⬇️ Exporter JSON</button>
+            <button id="importHistory" type="button" class="btn-mini big" title="Importer un fichier JSON d'historique">⬆️ Importer JSON</button>
+            <button id="resetHistory" type="button" class="btn-mini danger big" title="Vider complètement l'historique">🧹 Reset Historique</button>
+            <input id="importHistoryFile" type="file" accept="application/json" hidden />
+          </div>
+        </div>
+        <div class="ctrl draw-ctrl">
+          <button id="drawBtn" type="button" class="draw-btn full">🎲 Lancer le tirage</button>
+          <div class="message-wrapper"><div id="message" role="status" aria-live="polite" class="message"></div></div>
+        </div>
       </div>
       <div class="stats-bar" id="statsBar" aria-live="polite"></div>
-      <button id="drawBtn" type="button" class="draw-btn">🎲 Lancer le tirage</button>
-      <div id="message" role="status" aria-live="polite" class="message"></div>
     </section>
   </main>
 

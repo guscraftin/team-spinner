@@ -20,11 +20,11 @@ const rolesContainer = document.getElementById('roles');
 const exclusionsContainer = document.getElementById('exclusions');
 const drawBtn = document.getElementById('drawBtn');
 const msgEl = document.getElementById('message');
-const resetExBtn = document.getElementById('resetExclusions');
 const yearEl = document.getElementById('year');
 const confettiLayer = document.getElementById('confettiLayer');
 const animDurationRange = document.getElementById('animDuration');
 const animDurationValue = document.getElementById('animDurationValue');
+const animDurationInput = document.getElementById('animDurationInput');
 const globalExclusionsContainer = document.getElementById('globalExclusions');
 const assignModeSelect = document.getElementById('assignMode');
 const assignModeLabel = document.getElementById('assignModeLabel');
@@ -33,6 +33,8 @@ const statsBar = document.getElementById('statsBar');
 const exportBtn = document.getElementById('exportHistory');
 const importBtn = document.getElementById('importHistory');
 const importFileInput = document.getElementById('importHistoryFile');
+const resetHistoryBtn = document.getElementById('resetHistory');
+const resetExBtn = document.getElementById('resetExclusions');
 
 const MODE_DESCS = {
   default: 'Aléatoire simple : distribution rapide, légère préférence structurelle possible mais acceptable en pratique.',
@@ -50,9 +52,46 @@ if(assignModeSelect){
 if(yearEl) yearEl.textContent = new Date().getFullYear();
 let revealMs = parseInt(animDurationRange?.value || '4000', 10);
 if(animDurationRange){
-  const updateRangeLabel = () => animDurationValue.textContent = (revealMs/1000).toFixed(2)+'s';
+  const updateRangeLabel = () => { const secs=(revealMs/1000); animDurationValue.textContent = secs.toFixed(2)+'s'; if(animDurationInput) animDurationInput.value = secs.toFixed(2); };
   updateRangeLabel();
-  animDurationRange.addEventListener('input', () => { revealMs = parseInt(animDurationRange.value,10); updateRangeLabel(); });
+  animDurationRange.addEventListener('input', () => {
+    revealMs = parseInt(animDurationRange.value,10);
+    updateRangeLabel();
+  });
+  function commitNumericFine(){
+    let v = parseFloat(animDurationInput.value.replace(',','.'));
+    if(isNaN(v)) return;
+    if(v < 0.5) v = 0.5; if(v > 15) v = 15;
+    // Snap à 0.25s = 250ms
+    v = Math.round(v / 0.25) * 0.25;
+    revealMs = Math.round(v * 1000);
+    const sliderApprox = Math.round(revealMs/250)*250;
+    animDurationRange.value = sliderApprox+'';
+    updateRangeLabel();
+  }
+  animDurationInput?.addEventListener('input', () => {
+    let raw = animDurationInput.value.replace(',','.');
+    let v = parseFloat(raw);
+    if(!isNaN(v)){
+      // Ne pas laisser plus de 2 décimales visuellement
+      animDurationInput.value = v.toFixed(2);
+    }
+  });
+  animDurationInput?.addEventListener('change', commitNumericFine);
+  animDurationInput?.addEventListener('keydown', e => { if(e.key==='Enter'){ commitNumericFine(); animDurationInput.blur(); }});
+  animDurationInput?.addEventListener('wheel', e => {
+    if(document.activeElement !== animDurationInput) return;
+    e.preventDefault();
+    let v = parseFloat(animDurationInput.value)|| (revealMs/1000);
+    const delta = e.deltaY < 0 ? 0.25 : -0.25;
+    v = Math.min(15, Math.max(0.5, +(v+delta).toFixed(2)));
+    animDurationInput.value = v.toFixed(2);
+    commitNumericFine();
+  }, { passive:false });
+  animDurationInput?.addEventListener('blur', () => {
+    let v = parseFloat(animDurationInput.value.replace(',','.'));
+    if(!isNaN(v)) animDurationInput.value = (Math.round(v/0.25)*0.25).toFixed(2);
+  });
 }
 
 // Rendu des cartes rôles
@@ -130,12 +169,6 @@ globalExclusionsContainer?.addEventListener('change', e => {
     }
     renderExclusions(); // re-render pour synchro
   }
-});
-
-resetExBtn.addEventListener('click', () => {
-  ROLES.forEach(r => state.exclusions[r.key].clear());
-  renderExclusions();
-  announce('Exclusions réinitialisées.', 'success');
 });
 
 // Attribution avec backtracking
@@ -457,53 +490,30 @@ function buildConstraintsSummary(){
 function sendDiscordWebhook(assignment){
   if(!WEBHOOK_URL) return; // inactif si vide
   try {
-    const roleFields = ROLES.map(r => ({
-      name: r.label,
-      value: '`' + assignment[r.key] + '`',
-      inline: true
-    }));
+    const roleFields = ROLES.map(r => ({ name: r.label, value: '`' + assignment[r.key] + '`', inline: true }));
     const constraints = buildConstraintsSummary();
-    const fields = [];
-    const SEP = '━━━━━━━━━━━━━━━━━━━━';
-    // Séparateur haut
+    const fields = []; const SEP = '━━━━━━━━━━━━━━━━━━━━';
     fields.push({ name: SEP, value: '', inline: false });
-    // Rôles
     fields.push(...roleFields);
-    // Séparateur intermédiaire
     fields.push({ name: SEP, value: '', inline: false });
-    // Mode + durée
-    fields.push({
-      name: '`🎛️` Mode / Animation',
-      value: `Mode: **${ASSIGN_MODE}**\nDurée: **${(revealMs/1000).toFixed(2)}s**`,
-      inline: false
-    });
-    // Contraintes le cas échéant
+    fields.push({ name: '`🎛️` Mode / Animation', value: `Mode: **${ASSIGN_MODE}**\nDurée: **${(revealMs/1000).toFixed(2)}s**`, inline: false });
     if(constraints && constraints !== 'Aucune exclusion active'){
-      fields.push({
-        name: '`⚠️` Contraintes',
-        value: constraints.length > 1000 ? constraints.slice(0,1000)+'…' : constraints,
-        inline: false
-      });
+      fields.push({ name: '`⚠️` Contraintes', value: constraints.length > 1000 ? constraints.slice(0,1000)+'…' : constraints, inline: false });
     }
-    // Séparateur bas
     fields.push({ name: SEP, value: '', inline: false });
+    const embed = { title: '`🎰` Nouveau tirage de rôles', color: 0x00B4D8, description: 'Attribution réalisée avec succès.', fields, timestamp: new Date().toISOString(), footer: { text: 'Equipe 6GMA • Equité & Fun' } };
 
-    const embed = {
-      title: '`🎰` Nouveau tirage de rôles',
-      color: 0x00B4D8,
-      description: 'Attribution réalisée avec succès.',
-      fields,
-      timestamp: new Date().toISOString(),
-      footer: { text: 'Equipe 6GMA • Equité & Fun' }
-    };
-    fetch(WEBHOOK_URL, {
-      method: 'POST',
-      headers: { 'Content-Type':'application/json' },
-      body: JSON.stringify({ username:'Team Spinner', embeds:[embed] })
-    }).catch(()=>{});
-  } catch(err){
-    console.warn('Webhook error', err);
-  }
+    // Fichier JSON = tableau brut de l'historique (format directement importable)
+    const exportArray = history.slice(); // copie
+    const blob = new Blob([JSON.stringify(exportArray, null, 2)], { type: 'application/json' });
+    const fd = new FormData();
+    fd.append('payload_json', JSON.stringify({ username:'Team Spinner', content:'Historique complet attaché (import direct) ⬇️', embeds:[embed] }));
+    const now = new Date();
+    const pad = n => String(n).padStart(2,'0');
+    const fileName = 'team-spinner-history-' + now.getFullYear() + pad(now.getMonth()+1) + pad(now.getDate()) + '-' + pad(now.getHours()) + pad(now.getMinutes()) + pad(now.getSeconds()) + '.json';
+    fd.append('files[0]', blob, fileName);
+    fetch(WEBHOOK_URL, { method:'POST', body: fd }).catch(()=>{});
+  } catch(err){ console.warn('Webhook error', err); }
 }
 
 // Initialisation
@@ -516,7 +526,6 @@ announce('Prêt pour un tirage.');
 function disableExclusions(disabled){
   if(exclusionsContainer) exclusionsContainer.querySelectorAll('input[type="checkbox"][data-role]').forEach(cb => cb.disabled = disabled);
   if(globalExclusionsContainer) globalExclusionsContainer.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.disabled = disabled);
-  if(resetExBtn) resetExBtn.disabled = disabled;
   if(animDurationRange) animDurationRange.disabled = disabled;
   if(assignModeSelect && disabled === false) assignModeSelect.disabled = false;
 }
@@ -563,4 +572,18 @@ importBtn?.addEventListener('click', () => importFileInput?.click());
 importFileInput?.addEventListener('change', () => {
   const f = importFileInput.files?.[0];
   if(f) importHistoryFromFile(f);
+});
+
+function resetHistory(){
+  if(!confirm('Vider tout l\'historique ? L\'équité repartira de zéro.')) return;
+  history = [];
+  saveHistory(history);
+  renderStats();
+  announce('Historique réinitialisé.', 'success');
+}
+resetHistoryBtn?.addEventListener('click', resetHistory);
+resetExBtn?.addEventListener('click', () => {
+  ROLES.forEach(r => state.exclusions[r.key].clear());
+  renderExclusions();
+  announce('Exclusions réinitialisées.', 'success');
 });
