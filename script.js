@@ -483,7 +483,7 @@ function sendDiscordWebhook(assignment){
       });
     }
     // Séparateur bas
-    fields.push({ name: SEP, value: '\u200b', inline: false });
+    fields.push({ name: SEP, value: '', inline: false });
 
     const embed = {
       title: '`🎰` Nouveau tirage de rôles',
