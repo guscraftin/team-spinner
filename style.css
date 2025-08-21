@@ -103,3 +103,29 @@ footer { text-align:center; padding:2rem 0 3rem; font-size:.65rem; opacity:.6; }
 #confettiLayer { position:fixed; inset:0; pointer-events:none; overflow:hidden; z-index:999; }
 .confetti-piece { position:absolute; width:10px; height:14px; top:-20px; opacity:0; animation: fall linear forwards; will-change: transform; }
 @keyframes fall { to { transform: translateY(110vh) rotate(var(--rotEnd)); opacity:1; } }
+
+.global-exclusions { display:flex; flex-wrap:wrap; gap:.5rem; margin:0 0 1rem; }
+.global-exclusions .ge-item { position:relative; }
+.global-exclusions input { position:absolute; opacity:0; }
+.global-exclusions label { cursor:pointer; background:#ffffff10; padding:.45rem .75rem; border-radius:30px; font-size:.7rem; letter-spacing:.5px; display:flex; align-items:center; gap:.5ch; transition:var(--trans); }
+.global-exclusions input:checked + label { background:var(--danger); color:#fff; font-weight:600; }
+.global-exclusions input:not(:checked):hover + label { background:#ffffff18; }
+.global-exclusions label .tag { background:#0005; padding:.15rem .45rem; border-radius:12px; font-size:.6rem; text-transform:uppercase; letter-spacing:.8px; }
+
+@media (max-width:620px){
+  body { font-size:15px; }
+  header { padding:1.2rem .8rem .6rem; }
+  .roles-container { grid-template-columns: repeat(auto-fit,minmax(150px,1fr)); gap:.8rem; }
+  .role-card { padding:.8rem .75rem 1rem; }
+  .role-name { font-size:1.1rem; min-height:1.9rem; }
+  .exclusions-panel { padding:1rem .85rem 1.2rem; }
+  .exclusions-grid { grid-template-columns: repeat(auto-fit,minmax(150px,1fr)); gap:.7rem; }
+  .settings-row { width:100%; }
+  .draw-btn { width:100%; }
+  .global-exclusions label { font-size:.65rem; padding:.4rem .6rem; }
+}
+
+@media (min-width:1400px){
+  main { max-width: 1400px; }
+  .roles-container { grid-template-columns: repeat(auto-fit,minmax(260px,1fr)); }
+}

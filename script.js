@@ -23,9 +23,10 @@ const yearEl = document.getElementById('year');
 const confettiLayer = document.getElementById('confettiLayer');
 const animDurationRange = document.getElementById('animDuration');
 const animDurationValue = document.getElementById('animDurationValue');
+const globalExclusionsContainer = document.getElementById('globalExclusions');
 
 if(yearEl) yearEl.textContent = new Date().getFullYear();
-let revealMs = parseInt(animDurationRange?.value || '1500', 10);
+let revealMs = parseInt(animDurationRange?.value || '4000', 10);
 if(animDurationRange){
   const updateRangeLabel = () => animDurationValue.textContent = (revealMs/1000).toFixed(2)+'s';
   updateRangeLabel();
@@ -66,6 +67,23 @@ function renderExclusions(){
     block.appendChild(ul);
     exclusionsContainer.appendChild(block);
   });
+  renderGlobalExclusions();
+}
+
+function renderGlobalExclusions(){
+  if(!globalExclusionsContainer) return;
+  globalExclusionsContainer.innerHTML = '';
+  MEMBERS.forEach(member => {
+    // Un membre est globalement exclu si il est exclu de tous les rôles
+    const globallyExcluded = ROLES.every(r => state.exclusions[r.key].has(member));
+    const id = `gex-${member}`;
+    const wrap = document.createElement('div'); wrap.className='ge-item';
+    wrap.innerHTML = `
+      <input type="checkbox" id="${id}" data-member="${member}" ${globallyExcluded?'checked':''} />
+      <label for="${id}">${member}<span class="tag">ALL</span></label>
+    `;
+    globalExclusionsContainer.appendChild(wrap);
+  });
 }
 
 exclusionsContainer.addEventListener('change', e => {
@@ -74,6 +92,21 @@ exclusionsContainer.addEventListener('change', e => {
     const roleKey = t.dataset.role;
     const member = t.value;
     if(t.checked) state.exclusions[roleKey].add(member); else state.exclusions[roleKey].delete(member);
+  }
+});
+
+globalExclusionsContainer?.addEventListener('change', e => {
+  const t = e.target;
+  if(t.matches('input[type="checkbox"][data-member]')){
+    const member = t.dataset.member;
+    if(t.checked){
+      // Ajouter dans toutes les exclusions
+      ROLES.forEach(r => state.exclusions[r.key].add(member));
+    } else {
+      // Retirer de toutes les exclusions
+      ROLES.forEach(r => state.exclusions[r.key].delete(member));
+    }
+    renderExclusions(); // re-render pour synchro
   }
 });
 
@@ -282,6 +315,7 @@ drawBtn.addEventListener('click', () => {
 
 function disableExclusions(disabled){
   exclusionsContainer.querySelectorAll('input[type="checkbox"][data-role]').forEach(cb => { cb.disabled = disabled; });
+  globalExclusionsContainer?.querySelectorAll('input[type="checkbox"]').forEach(cb => { cb.disabled = disabled; });
   if(resetExBtn) resetExBtn.disabled = disabled;
   if(animDurationRange) animDurationRange.disabled = disabled;
 }
@@ -292,4 +326,5 @@ window.addEventListener('keydown', e => { if(e.key.toLowerCase()==='t') drawBtn.
 // Initialisation
 renderRoleCards();
 renderExclusions();
+renderGlobalExclusions();
 announce('Prêt pour un tirage.');
