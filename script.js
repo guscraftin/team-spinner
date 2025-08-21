@@ -454,19 +454,27 @@ function buildConstraintsSummary(){
 function sendDiscordWebhook(assignment){
   if(!WEBHOOK_URL) return; // inactif si vide
   try {
-    const fields = ROLES.map(r => ({
+    const roleFields = ROLES.map(r => ({
       name: r.label,
       value: '`' + assignment[r.key] + '`',
       inline: true
     }));
     const constraints = buildConstraintsSummary();
-    // Ajouter un champ récap mode + durée
+    const fields = [];
+    const SEP = '━━━━━━━━━━━━━━━━━━━━';
+    // Séparateur haut
+    fields.push({ name: SEP, value: '', inline: false });
+    // Rôles
+    fields.push(...roleFields);
+    // Séparateur intermédiaire
+    fields.push({ name: SEP, value: '', inline: false });
+    // Mode + durée
     fields.push({
       name: '`🎛️` Mode / Animation',
       value: `Mode: **${ASSIGN_MODE}**\nDurée: **${(revealMs/1000).toFixed(2)}s**`,
       inline: false
     });
-    // Ajouter un champ contraintes distinct si non vide
+    // Contraintes le cas échéant
     if(constraints && constraints !== 'Aucune exclusion active'){
       fields.push({
         name: '`⚠️` Contraintes',
@@ -474,6 +482,9 @@ function sendDiscordWebhook(assignment){
         inline: false
       });
     }
+    // Séparateur bas
+    fields.push({ name: SEP, value: '\u200b', inline: false });
+
     const embed = {
       title: '`🎰` Nouveau tirage de rôles',
       color: 0x00B4D8,
