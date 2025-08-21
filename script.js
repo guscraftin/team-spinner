@@ -1,5 +1,5 @@
 // Data de base
-const MEMBERS = ["Rohan", "Augustin", "Mailys", "Nathan", "Alban", "Tom"];
+const MEMBERS = ["Alban", "Augustin", "Mailys", "Nathan", "Rohan", "Tom"];
 const ROLES = [
   { key: "scribe", label: "Scribe ✍️", color: "#ffbf69" },
   { key: "timekeeper", label: "Time Keeper ⏰", color: "#2ec4b6" },
