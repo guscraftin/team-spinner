@@ -2,9 +2,9 @@
 const MEMBERS = ["Alban", "Augustin", "Mailys", "Nathan", "Rohan", "Tom"];
 const ROLES = [
   { key: "scribe", label: "Scribe ✍️", color: "#ffbf69" },
-  { key: "timekeeper", label: "Time Keeper ⏰", color: "#2ec4b6" },
-  { key: "feedbacker", label: "Feedbacker 💬", color: "#ff3864" },
-  { key: "leader", label: "Leader Éveilleur 🌟", color: "#8f44fd" }
+  { key: "feedbacker", label: "Meta Feedbacker 💬", color: "#ff3864" },
+  { key: "leader", label: "Leader Éveilleur 🌟", color: "#8f44fd" },
+  { key: "timekeeper", label: "Time Keeper ⏰", color: "#2ec4b6" }
 ];
 
 const state = {
