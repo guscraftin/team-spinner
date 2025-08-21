@@ -6,6 +6,8 @@ const ROLES = [
   { key: "leader", label: "Leader Éveilleur 🌟", color: "#8f44fd" },
   { key: "timekeeper", label: "Time Keeper ⏰", color: "#2ec4b6" }
 ];
+// Webhook Discord (laisser vide si non utilisé) — ATTENTION : exposé côté client.
+const WEBHOOK_URL = (window.APP_CONFIG && window.APP_CONFIG.WEBHOOK_URL) || '';
 
 const state = {
   exclusions: {},
@@ -423,6 +425,7 @@ drawBtn.addEventListener('click', () => {
         history.push({ ts: Date.now(), assignment });
         saveHistory(history);
         renderStats();
+        sendDiscordWebhook(assignment);
         launchConfetti();
         announce('Attribution réussie !', 'success');
       } catch(e){ console.error(e); announce('Erreur inattendue.','error'); }
@@ -431,15 +434,48 @@ drawBtn.addEventListener('click', () => {
   }, revealMs + 30);
 });
 
-function disableExclusions(disabled){
-  exclusionsContainer.querySelectorAll('input[type="checkbox"][data-role]').forEach(cb => { cb.disabled = disabled; });
-  globalExclusionsContainer?.querySelectorAll('input[type="checkbox"]').forEach(cb => { cb.disabled = disabled; });
-  if(resetExBtn) resetExBtn.disabled = disabled;
-  if(animDurationRange) animDurationRange.disabled = disabled;
+function buildConstraintsSummary(){
+  // Globalement exclus (exclus de tous les rôles)
+  const globalExcluded = MEMBERS.filter(m => ROLES.every(r => state.exclusions[r.key].has(m)));
+  let lines = [];
+  if(globalExcluded.length){
+    lines.push(`Exclus tous rôles: ${globalExcluded.join(', ')}`);
+  }
+  ROLES.forEach(r => {
+    const ex = [...state.exclusions[r.key]];
+    if(ex.length){
+      lines.push(`${r.key}: ${ex.join(', ')}`);
+    }
+  });
+  if(!lines.length) return 'Aucune exclusion active';
+  return lines.join('\n');
 }
 
-// Raccourci clavier
-window.addEventListener('keydown', e => { if(e.key.toLowerCase()==='t') drawBtn.click(); });
+function sendDiscordWebhook(assignment){
+  if(!WEBHOOK_URL) return; // inactif si vide
+  try {
+    const fields = ROLES.map(r => ({
+      name: r.label,
+      value: assignment[r.key],
+      inline: true
+    }));
+    const constraints = buildConstraintsSummary();
+    const embed = {
+      title: '🎲 Nouveau tirage de rôles',
+      color: 0x00B4D8,
+      fields,
+      footer: { text: new Date().toLocaleString() },
+      description: 'Contraintes:\n'+constraints
+    };
+    fetch(WEBHOOK_URL, {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json' },
+      body: JSON.stringify({ username:'Team Spinner', embeds:[embed] })
+    }).catch(()=>{});
+  } catch(err){
+    console.warn('Webhook error', err);
+  }
+}
 
 // Initialisation
 renderRoleCards();
@@ -447,3 +483,11 @@ renderExclusions();
 renderGlobalExclusions();
 renderStats();
 announce('Prêt pour un tirage.');
+
+function disableExclusions(disabled){
+  if(exclusionsContainer) exclusionsContainer.querySelectorAll('input[type="checkbox"][data-role]').forEach(cb => cb.disabled = disabled);
+  if(globalExclusionsContainer) globalExclusionsContainer.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.disabled = disabled);
+  if(resetExBtn) resetExBtn.disabled = disabled;
+  if(animDurationRange) animDurationRange.disabled = disabled;
+  if(assignModeSelect && disabled === false) assignModeSelect.disabled = false;
+}
