@@ -541,7 +541,9 @@ function exportHistory(){
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = 'team-spinner-history-'+new Date().toISOString().split('T')[0]+'.json';
+  const now = new Date(); const pad = n => String(n).padStart(2,'0');
+  const fileName = 'team-spinner-history-' + now.getFullYear() + pad(now.getMonth()+1) + pad(now.getDate()) + '-' + pad(now.getHours()) + pad(now.getMinutes()) + pad(now.getSeconds()) + '.json';
+  a.download = fileName;
   document.body.appendChild(a); a.click(); a.remove();
   URL.revokeObjectURL(url);
   announce('Historique exporté.', 'success');
