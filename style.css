@@ -159,3 +159,9 @@ main { max-width:1220px; margin:0 auto; padding:0 1.2rem 3.5rem; }
 .stats-chip.good { border-color:#48e1a588; color:#48e1a5; }
 .stats-chip span { font-weight:600; }
 .mode-desc { margin-top:.45rem; font:500 .6rem var(--mono); letter-spacing:.8px; background:#0f1f2a; border:1px solid #ffffff14; padding:.55rem .7rem; border-radius:10px; color:#cfe9f7; max-width:420px; }
+
+.history-controls { display:flex; gap:.6rem; margin-top:.4rem; }
+.btn-mini { background:#14202b; border:1px solid #1f2e3a; color:#d9f3ff; font:500 .6rem var(--mono); letter-spacing:.9px; padding:.45rem .7rem; border-radius:8px; cursor:pointer; transition:var(--transition); text-transform:uppercase; }
+.btn-mini:hover { background:#1d2c39; }
+.btn-mini:active { transform:translateY(1px); }
+.btn-mini:disabled { opacity:.5; cursor:not-allowed; }

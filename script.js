@@ -30,6 +30,9 @@ const assignModeSelect = document.getElementById('assignMode');
 const assignModeLabel = document.getElementById('assignModeLabel');
 const assignModeDesc = document.getElementById('assignModeDesc');
 const statsBar = document.getElementById('statsBar');
+const exportBtn = document.getElementById('exportHistory');
+const importBtn = document.getElementById('importHistory');
+const importFileInput = document.getElementById('importHistoryFile');
 
 const MODE_DESCS = {
   default: 'Aléatoire simple : distribution rapide, légère préférence structurelle possible mais acceptable en pratique.',
@@ -517,3 +520,47 @@ function disableExclusions(disabled){
   if(animDurationRange) animDurationRange.disabled = disabled;
   if(assignModeSelect && disabled === false) assignModeSelect.disabled = false;
 }
+
+// Export / Import JSON historique
+function validateHistoryArray(arr){
+  if(!Array.isArray(arr)) return false;
+  return arr.every(e => e && typeof e === 'object' && typeof e.ts === 'number' && e.assignment && typeof e.assignment === 'object' && ROLES.every(r => typeof e.assignment[r.key] === 'string'));
+}
+function exportHistory(){
+  const data = JSON.stringify(history, null, 2);
+  const blob = new Blob([data], { type:'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'team-spinner-history-'+new Date().toISOString().split('T')[0]+'.json';
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+  announce('Historique exporté.', 'success');
+}
+function importHistoryFromFile(file){
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const parsed = JSON.parse(reader.result);
+      if(!validateHistoryArray(parsed)) throw new Error('Format invalide');
+      // Fusion intelligente: conserver unicité par timestamp+assignment hash
+      const existingHashes = new Set(history.map(h => JSON.stringify(h.assignment)+':'+h.ts));
+      let added = 0;
+      parsed.forEach(entry => {
+        const h = JSON.stringify(entry.assignment)+':'+entry.ts;
+        if(!existingHashes.has(h)) { history.push(entry); existingHashes.add(h); added++; }
+      });
+      history.sort((a,b)=> a.ts - b.ts);
+      saveHistory(history);
+      renderStats();
+      announce(`Import réussi (+${added} entrées).`, 'success');
+    } catch(err){ announce('Import échoué: '+err.message, 'error'); }
+  };
+  reader.readAsText(file);
+}
+exportBtn?.addEventListener('click', exportHistory);
+importBtn?.addEventListener('click', () => importFileInput?.click());
+importFileInput?.addEventListener('change', () => {
+  const f = importFileInput.files?.[0];
+  if(f) importHistoryFromFile(f);
+});
