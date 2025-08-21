@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Team Spinner</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <h1>Team Spinner 🎯</h1>
+    <p class="subtitle">Tirage aléatoire des rôles d'équipe</p>
+  </header>
+
+  <main>
+    <section id="roles" class="roles-container"><!-- Cartes rôles injectées ici --></section>
+
+    <section class="exclusions-panel">
+      <h2>Exclusions ciblées</h2>
+      <p class="hint">Coche un membre pour l'empêcher d'obtenir ce rôle lors du prochain tirage.</p>
+      <div id="exclusions" class="exclusions-grid"><!-- Grille exclusions --></div>
+      <div class="ex-actions">
+        <button id="resetExclusions" type="button" class="btn-secondary">Réinitialiser exclusions</button>
+      </div>
+    </section>
+
+    <section class="actions">
+      <div class="settings-row">
+        <label for="animDuration">⏱️ Durée animation : <span id="animDurationValue">1.5s</span></label>
+        <input id="animDuration" type="range" min="500" max="15000" step="250" value="1500" />
+      </div>
+      <button id="drawBtn" type="button" class="draw-btn">🎲 Lancer le tirage</button>
+      <div id="message" role="status" aria-live="polite" class="message"></div>
+    </section>
+  </main>
+
+  <footer>
+    <small>Vanilla JS • Aucun framework • <span id="year"></span></small>
+  </footer>
+  <div id="confettiLayer" aria-hidden="true"></div>
+  <script src="script.js"></script>
+</body>
+</html>
