@@ -282,6 +282,8 @@ drawBtn.addEventListener('click', () => {
 
 function disableExclusions(disabled){
   exclusionsContainer.querySelectorAll('input[type="checkbox"][data-role]').forEach(cb => { cb.disabled = disabled; });
+  if(resetExBtn) resetExBtn.disabled = disabled;
+  if(animDurationRange) animDurationRange.disabled = disabled;
 }
 
 // Raccourci clavier
