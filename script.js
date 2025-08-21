@@ -456,16 +456,31 @@ function sendDiscordWebhook(assignment){
   try {
     const fields = ROLES.map(r => ({
       name: r.label,
-      value: assignment[r.key],
+      value: '`' + assignment[r.key] + '`',
       inline: true
     }));
     const constraints = buildConstraintsSummary();
+    // Ajouter un champ récap mode + durée
+    fields.push({
+      name: '`🎛️` Mode / Animation',
+      value: `Mode: **${ASSIGN_MODE}**\nDurée: **${(revealMs/1000).toFixed(2)}s**`,
+      inline: false
+    });
+    // Ajouter un champ contraintes distinct si non vide
+    if(constraints && constraints !== 'Aucune exclusion active'){
+      fields.push({
+        name: '`⚠️` Contraintes',
+        value: constraints.length > 1000 ? constraints.slice(0,1000)+'…' : constraints,
+        inline: false
+      });
+    }
     const embed = {
-      title: '🎲 Nouveau tirage de rôles',
+      title: '`🎰` Nouveau tirage de rôles',
       color: 0x00B4D8,
+      description: 'Attribution réalisée avec succès.',
       fields,
-      footer: { text: new Date().toLocaleString() },
-      description: 'Contraintes:\n'+constraints
+      timestamp: new Date().toISOString(),
+      footer: { text: 'Equipe 6GMA • Equité & Fun' }
     };
     fetch(WEBHOOK_URL, {
       method: 'POST',
