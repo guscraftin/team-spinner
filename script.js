@@ -24,6 +24,23 @@ const confettiLayer = document.getElementById('confettiLayer');
 const animDurationRange = document.getElementById('animDuration');
 const animDurationValue = document.getElementById('animDurationValue');
 const globalExclusionsContainer = document.getElementById('globalExclusions');
+const assignModeSelect = document.getElementById('assignMode');
+const assignModeLabel = document.getElementById('assignModeLabel');
+const assignModeDesc = document.getElementById('assignModeDesc');
+const statsBar = document.getElementById('statsBar');
+
+const MODE_DESCS = {
+  default: 'Aléatoire simple : distribution rapide, légère préférence structurelle possible mais acceptable en pratique.',
+  uniform: 'Uniforme parfaite : calcule toutes les distributions valides et choisit l’une d’elles au hasard (répartition mathématiquement équitable).',
+  weighted: 'Équilibrage progressif : réduit les écarts historiques en augmentant les chances des membres moins servis pour chaque rôle.'
+};
+function updateModeDesc(mode){ if(assignModeDesc) assignModeDesc.textContent = MODE_DESCS[mode] || ''; }
+// Initialiser libellé + description si le select existe
+if(assignModeSelect){
+  const opt = assignModeSelect.options[assignModeSelect.selectedIndex];
+  if(assignModeLabel && opt) assignModeLabel.textContent = opt.text;
+  updateModeDesc(assignModeSelect.value);
+}
 
 if(yearEl) yearEl.textContent = new Date().getFullYear();
 let revealMs = parseInt(animDurationRange?.value || '4000', 10);
@@ -291,26 +308,127 @@ function launchConfetti(){
   }
 }
 
+// Historique
+const HISTORY_KEY = 'teamSpinnerHistoryV1';
+function loadHistory(){ try { return JSON.parse(localStorage.getItem(HISTORY_KEY)) || []; } catch { return []; } }
+function saveHistory(h){ localStorage.setItem(HISTORY_KEY, JSON.stringify(h)); }
+let history = loadHistory();
+
+function buildCounters(){
+  const counters = {};
+  MEMBERS.forEach(m => counters[m] = {});
+  history.forEach(entry => {
+    ROLES.forEach(r => {
+      const person = entry.assignment[r.key];
+      counters[person][r.key] = (counters[person][r.key] || 0) + 1;
+    });
+  });
+  return counters;
+}
+
+function renderStats(){
+  if(!statsBar) return;
+  const counters = buildCounters();
+  const total = history.length || 1;
+  statsBar.innerHTML = '';
+  // On calcule pour chaque membre un score d'équilibre (std simple)
+  MEMBERS.forEach(m => {
+    let sum = 0; let arr = [];
+    ROLES.forEach(r => { const c = counters[m][r.key] || 0; arr.push(c); sum += c; });
+    const mean = sum / ROLES.length;
+    const variance = arr.reduce((a,v)=>a + Math.pow(v-mean,2),0)/ROLES.length;
+    const std = Math.sqrt(variance);
+    const chip = document.createElement('div');
+    chip.className = 'stats-chip ' + (std > total*0.15 ? 'bad':'good');
+    chip.innerHTML = `<span>${m}</span> ${arr.map(v=>v).join('/')}`;
+    statsBar.appendChild(chip);
+  });
+}
+
+let ASSIGN_MODE = 'default';
+assignModeSelect?.addEventListener('change', () => {
+  ASSIGN_MODE = assignModeSelect.value;
+  assignModeLabel.textContent = assignModeSelect.options[assignModeSelect.selectedIndex].text;
+  updateModeDesc(ASSIGN_MODE);
+  renderStats();
+});
+assignModeSelect?.addEventListener('mousemove', e => {
+  const opt = e.target.closest('option');
+  if(opt) updateModeDesc(opt.value);
+});
+assignModeSelect?.addEventListener('mouseleave', () => updateModeDesc(ASSIGN_MODE));
+
+window.setAssignMode = mode => { ASSIGN_MODE = mode; if(assignModeSelect){ assignModeSelect.value = mode; assignModeLabel.textContent = assignModeSelect.options[assignModeSelect.selectedIndex].text; } renderStats(); console.log('Mode attribution =', mode); };
+
+// Attribution uniforme exhaustive
+function assignRolesUniform(){
+  const valid = [];
+  const members = [...MEMBERS];
+  function permute(arr, l){
+    if(l === 4){
+      const partial = arr.slice(0,4);
+      for(let i=0;i<ROLES.length;i++) if(state.exclusions[ROLES[i].key].has(partial[i])) return;
+      const obj = {}; for(let i=0;i<ROLES.length;i++) obj[ROLES[i].key] = partial[i];
+      valid.push(obj); return;
+    }
+    for(let i=l;i<arr.length;i++){
+      [arr[l],arr[i]] = [arr[i],arr[l]];
+      permute(arr,l+1);
+      [arr[l],arr[i]] = [arr[i],arr[l]];
+    }
+  }
+  permute(members,0);
+  if(valid.length === 0) throw new Error('Aucune attribution valide.');
+  return valid[Math.floor(Math.random()*valid.length)];
+}
+
+// Attribution pondérée (équilibrage)
+function assignRolesWeighted(){
+  const counters = buildCounters();
+  const available = new Set(MEMBERS);
+  const result = {};
+  for(const role of ROLES){
+    const candidates = [...available].filter(m => !state.exclusions[role.key].has(m));
+    if(candidates.length === 0) throw new Error('Exclusion totale pour un rôle.');
+    const weights = candidates.map(m => 1 / (1 + (counters[m][role.key] || 0)));
+    const total = weights.reduce((a,b)=>a+b,0);
+    let r = Math.random() * total; let chosen = candidates[0];
+    for(let i=0;i<candidates.length;i++){ r -= weights[i]; if(r <= 0){ chosen = candidates[i]; break; } }
+    result[role.key] = chosen; available.delete(chosen);
+  }
+  return result;
+}
+
+function getAssignment(){
+  switch(ASSIGN_MODE){
+    case 'uniform': return assignRolesUniform();
+    case 'weighted': return assignRolesWeighted();
+    default: return assignRoles();
+  }
+}
+
 // Gestion tirage --------------------------------------------------
 let drawing = false;
 
 drawBtn.addEventListener('click', () => {
   if(drawing) return;
   let assignment;
-  try { assignment = assignRoles(); } catch(e){ announce(e.message,'error'); return; }
-  drawing = true; drawBtn.disabled = true; disableExclusions(true); announce('Tirage en cours...');
+  try { assignment = getAssignment(); } catch(e){ announce(e.message,'error'); return; }
+  drawing = true; drawBtn.disabled = true; disableExclusions(true); assignModeSelect.disabled = true; announce('Tirage en cours...');
   const handler = rollingEffect(assignment);
   setTimeout(() => {
     requestAnimationFrame(() => {
       try {
         state.lastAssignment = assignment;
-        // Le step final a déjà figé les noms; juste confettis
+        history.push({ ts: Date.now(), assignment });
+        saveHistory(history);
+        renderStats();
         launchConfetti();
         announce('Attribution réussie !', 'success');
       } catch(e){ console.error(e); announce('Erreur inattendue.','error'); }
-      finally { drawing = false; drawBtn.disabled = false; disableExclusions(false); }
+      finally { drawing = false; drawBtn.disabled = false; disableExclusions(false); assignModeSelect.disabled = false; }
     });
-  }, revealMs + 30); // léger buffer
+  }, revealMs + 30);
 });
 
 function disableExclusions(disabled){
@@ -327,4 +445,5 @@ window.addEventListener('keydown', e => { if(e.key.toLowerCase()==='t') drawBtn.
 renderRoleCards();
 renderExclusions();
 renderGlobalExclusions();
+renderStats();
 announce('Prêt pour un tirage.');

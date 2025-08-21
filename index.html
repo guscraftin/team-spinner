@@ -40,6 +40,16 @@
         <label for="animDuration" class="serif">⏱️ Durée animation : <span id="animDurationValue">4.00s</span></label>
         <input id="animDuration" type="range" min="500" max="15000" step="250" value="4000" />
       </div>
+      <div class="settings-row mode-row">
+        <label for="assignMode" class="serif">🎛️ Mode : <span id="assignModeLabel">Aléatoire</span></label>
+        <select id="assignMode" aria-label="Mode d'attribution">
+          <option value="default" title="Aléatoire simple sans mémoire">Aléatoire</option>
+            <option value="uniform" title="Uniforme: tirage parmi toutes les distributions valides avec probabilité égale">Uniforme parfaite</option>
+            <option value="weighted" title="Équilibrage: favorise ceux qui ont eu moins souvent un rôle">Équilibrage progressif</option>
+        </select>
+        <div id="assignModeDesc" class="mode-desc" aria-live="polite"></div>
+      </div>
+      <div class="stats-bar" id="statsBar" aria-live="polite"></div>
       <button id="drawBtn" type="button" class="draw-btn">🎲 Lancer le tirage</button>
       <div id="message" role="status" aria-live="polite" class="message"></div>
     </section>
