@@ -1,90 +1,86 @@
-# Team Spinner
+# Team Spinner 6GMA
 
-Application front-only pour attribuer automatiquement des rôles à une équipe, avec animation, exclusions fines, modes d’équilibrage et envoi optionnel du résultat dans un salon Discord via Webhook.
+Outil web léger (HTML/CSS/JS pur) pour tirer aléatoirement et équitablement les rôles d'une équipe (Scribe, Meta Feedbacker, Leader Éveilleur, Time Keeper) avec gestion d'exclusions, équilibrage statistique, historique persistent et exportable, et notification Discord (webhook) incluant automatiquement un fichier JSON importable sur un autre appareil.
 
-## Fonctionnalités
+## Fonctionnalités principales
 
-- Tirage animé (roulette) avec durée configurable.
-- Exclusions par rôle + exclusion globale (ALL) en 1 clic.
-- 3 modes d’attribution:
-  - Aléatoire (default)
-  - Uniforme (explore toutes les distributions valides et choisit au hasard)
-  - Équilibrage progressif (pondère selon l’historique local)
-- Historique local (localStorage) + stats d’équilibre par membre.
-- Envoi automatique (optionnel) vers un Webhook Discord (embed résultat + contraintes).
+- Tirage de rôles en 3 modes: Aléatoire, Uniforme parfaite, Équilibrage progressif.
+- Animation personnalisable (0.50s à 15.00s par pas de 0.25s).
+- Exclusions ciblées + exclusions globales (ALL).
+- Historique local (localStorage) avec stats d'équité (répartition par rôle / membre).
+- Export / import JSON (interopérabilité entre appareils).
+- Envoi automatique sur Discord (embed + fichier JSON importable) après chaque tirage.
+- Confettis & micro-animations pour le fun.
 
-## Lancement rapide (local, sans serveur)
+## Mise en place rapide
 
-1. Cloner le repository.
-2. Ouvrir directement `index.html` dans un navigateur moderne (Chrome / Edge / Firefox). Aucune compilation nécessaire.
-3. (Optionnel) Configurer le Webhook Discord pour recevoir les résultats.
+1. Cloner ou télécharger le dépôt.
+2. (Optionnel) Créer un fichier `config.local.js` pour ajouter un webhook Discord :
 
-## Configuration du Webhook Discord
+   ```js
+   window.APP_CONFIG = { WEBHOOK_URL: 'https://discord.com/api/webhooks/ID/TOKEN' };
+   ```
 
-1. Dans Discord: Paramètres du salon cible > Intégrations > Webhooks > Nouveau Webhook > Copier l’URL.
-2. Créer le fichier `config.local.js` à la racine (il est déjà ignoré par Git) si non présent et y placer:
+3. Ouvrir simplement `index.html` dans un navigateur moderne (Chrome, Firefox, Edge). Aucun build requis.
+4. (Optionnel) Héberger sur un service statique (GitHub Pages, Netlify, Vercel…)
 
-    ```js
-    window.APP_CONFIG = { WEBHOOK_URL: 'https://discord.com/api/webhooks/XXXX/YYY' };
-    ```
+## Utilisation
 
-3. Recharger la page. À chaque tirage, un embed est posté dans le salon.
-4. Pour désactiver l’envoi: laisser `WEBHOOK_URL` vide ou renommer / supprimer `config.local.js`.
+1. Ajuster (si besoin) les exclusions par rôle ou globales.
+2. Choisir le mode de tirage et la durée d'animation.
+3. Cliquer sur "Lancer le tirage".
+4. Consulter l'historique + statistiques (barres sous les contrôles).
+5. Exporter / Importer l'historique pour synchroniser l'équité entre machines.
 
-⚠️ Limitation: le Webhook est visible dans le code client (pas secret). Pour le protéger, il faut un petit backend qui relaie l’envoi.
+### Import / Export manuel
 
-## Exclusions & contraintes
+- Export : bouton "Exporter JSON" → génère un fichier `team-spinner-history-YYYY-MM-DD.json`.
+- Import : bouton "Importer JSON" → sélectionner un fichier précédemment exporté (ou reçu via Discord).
 
-- Cocher une personne sous un rôle = elle ne pourra pas recevoir ce rôle au prochain tirage.
-- Bouton ALL (exclusion globale) = exclut un membre de tous les rôles simultanément.
-- Le message Discord inclut une section "Contraintes" listant les exclusions actives (et les membres exclus de tout).
+### Webhook Discord
 
-## Modes d’attribution
+Chaque tirage envoie :
 
-Sélecteur en bas de page:
+- Un embed récapitulatif (rôles, mode, contraintes).
+- Un fichier JSON : tableau brut de l'historique complet (directement ré‑importable).
 
-- Aléatoire: simple backtracking, rapide.
-- Uniforme parfaite: calcule toutes les attributions valides (6P4 = 360 max) puis choisit uniformément.
-- Équilibrage progressif: augmente la probabilité des membres qui ont eu moins un rôle donné.
-
-Survoler le sélecteur affiche une description contextuelle.
-
-## Historique & stats
-
-- Stockage dans `localStorage` clé `teamSpinnerHistoryV1`.
-- La barre de stats montre, par membre, le nombre d’occurrences pour chaque rôle (code couleur équilibre simple).
-- Réinitialiser l’historique: effacer manuellement la clé dans les devtools si besoin.
+Sécurité : le webhook est côté client, donc ne pas utiliser un webhook sensible (créez un webhook dédié).
 
 ## Personnalisation
 
-- Modifier `MEMBERS` et `ROLES` tout en haut de `script.js`.
-- Les couleurs des rôles pilotent la pastille (role-pill) et l’embed.
-- Ajuster la durée par défaut: attribut `value` de l’input range `animDuration` dans `index.html`.
+- Ajouter / modifier les membres dans `script.js` (const MEMBERS).
+- Ajouter / modifier des rôles (const ROLES) avec `key`, `label`, `color`.
+- Styliser via `style.css` (thème, animations, boutons).
 
-## Structure principale
+## Structure minimale
 
-```bash
-index.html          # Page statique
-style.css           # Styles et responsive
-script.js           # Logique application (tirages, exclusions, stats, webhook)
-config.local.js     # (Ignoré Git) configuration locale du Webhook
-.gitignore          # Ignore config.local.js
+```text
+index.html
+script.js
+style.css
+config.local.js (optionnel, ignoré en prod)
 ```
 
-## Sécurité (front-only)
+## Synchronisation multi-appareils
 
-- Pas de secret durable possible: le Webhook doit être régénéré si exposé publiquement.
-- Pour sécuriser: ajouter un backend (Express) qui garde le Webhook côté serveur et expose un POST /draw.
+Deux options :
 
-## Améliorations possibles
+- Importer le fichier JSON exporté manuellement.
+- Télécharger le fichier joint dans le message Discord après tirage et l'importer.
 
-- Backend + DB partagée multi-appareils.
-- Auth simple (clé API) + modes réservés.
-- Export / import historique (JSON).
-- WebSocket pour push en temps réel.
+## Limites & Notes
 
-## Licence
+- Données locales stockées en `localStorage` (effacées si nettoyage navigateur).
+- Pas de backend : toute logique côté client.
+- Le webhook ne doit pas exposer des secrets critiques.
 
-Usage interne équipe.
+## Roadmap (idées)
 
-Bonne utilisation 🎲
+- Mode "rotation" stricte.
+- UI mobile avancée / PWA.
+- Filtrage par date dans l'historique.
+- Tests unitaires sur les algorithmes d'attribution.
+
+---
+
+Happy fair spinning! 🎲
