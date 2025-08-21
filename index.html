@@ -6,17 +6,27 @@
   <title>Team Spinner</title>
   <link rel="stylesheet" href="style.css" />
 </head>
-<body>
+<body class="theme-academic">
+  <div class="bg-triangles" aria-hidden="true"></div>
   <header>
-    <h1>Team Spinner 🎯</h1>
-    <p class="subtitle">Tirage aléatoire des rôles d'équipe</p>
+    <div class="brand-cluster">
+      <div class="crest">
+        <div class="crest-inner">
+          <span class="laurel left" aria-hidden="true"></span>
+          <span class="crest-icon" aria-hidden="true">⚙️</span>
+          <span class="laurel right" aria-hidden="true"></span>
+        </div>
+      </div>
+      <h1><span class="serif">6GMA</span> Team Spinner</h1>
+      <p class="subtitle">Roulette des rôles d'équipe • Fun & Équitable</p>
+    </div>
   </header>
 
   <main>
     <section id="roles" class="roles-container"><!-- Cartes rôles injectées ici --></section>
 
     <section class="exclusions-panel">
-      <h2>Exclusions ciblées</h2>
+      <h2 class="serif section-title">Exclusions ciblées</h2>
       <p class="hint">Coche un membre pour l'empêcher d'obtenir ce rôle lors du prochain tirage.</p>
       <div id="globalExclusions" class="global-exclusions"><!-- Exclusions globales --></div>
       <div id="exclusions" class="exclusions-grid"><!-- Grille exclusions --></div>
@@ -27,7 +37,7 @@
 
     <section class="actions">
       <div class="settings-row">
-        <label for="animDuration">⏱️ Durée animation : <span id="animDurationValue">4.00s</span></label>
+        <label for="animDuration" class="serif">⏱️ Durée animation : <span id="animDurationValue">4.00s</span></label>
         <input id="animDuration" type="range" min="500" max="15000" step="250" value="4000" />
       </div>
       <button id="drawBtn" type="button" class="draw-btn">🎲 Lancer le tirage</button>
